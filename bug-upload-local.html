@@ -1,0 +1,542 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Đăng bug lên Trello (bản cục bộ)</title>
+<style>
+:root{
+  --bg:#eef1f6; --surface:#ffffff; --ink:#18202e; --muted:#5b6678; --line:#d7dce6;
+  --bug:#c8352b; --bug-soft:#fbe9e7; --act:#1f5fd1; --act-ink:#ffffff; --ok:#1d7a4a; --err:#b3261e; --warn-bg:#fff4d6; --warn-ink:#6b4a00; --field:#f7f8fb;
+}
+@media (prefers-color-scheme: dark){
+  :root{--bg:#0f141d; --surface:#171e2b; --ink:#e8ecf4; --muted:#9aa5b8; --line:#2b3447; --bug:#ff7a6e; --bug-soft:#3a1d1a; --act:#6ea0ff; --act-ink:#0b1220; --ok:#5fd596; --err:#ff8a80; --warn-bg:#3a2f12; --warn-ink:#f5d37a; --field:#121926}
+}
+*,*::before,*::after{box-sizing:border-box}
+html{height:100%}
+body{margin:0; min-height:100%; background:var(--bg); color:var(--ink); font:16px/1.55 system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif}
+main{max-width:680px; margin:0 auto; padding:20px 16px 48px}
+header{display:flex; gap:12px; align-items:flex-start; margin-bottom:20px}
+.mark{flex:none; width:40px; height:40px; border-radius:10px; background:var(--bug); color:#fff; display:grid; place-items:center; font-size:22px}
+h1{font-size:1.25rem; line-height:1.3; margin:0 0 2px}
+.where{margin:0; color:var(--muted); font-size:.9rem}
+.where a{color:var(--act); font-weight:500; text-decoration:none}
+section{background:var(--surface); border:1px solid var(--line); border-radius:12px; padding:16px; margin-bottom:12px}
+h2{font-size:1rem; margin:0 0 10px}
+label.f{display:block; font-weight:500; font-size:.9rem; margin-bottom:6px}
+select{width:100%; font:inherit; color:var(--ink); background:var(--field); border:1px solid var(--line); border-radius:8px; padding:10px 12px; min-height:44px}
+select:focus-visible{outline:3px solid var(--act); outline-offset:2px}
+input[type=text],input[type=password],textarea{width:100%; font:inherit; color:var(--ink); background:var(--field); border:1px solid var(--line); border-radius:8px; padding:10px 12px}
+textarea{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace; font-size:.88rem; line-height:1.6; min-height:280px; resize:vertical}
+input:focus-visible,textarea:focus-visible,button:focus-visible,a:focus-visible,summary:focus-visible{outline:3px solid var(--act); outline-offset:2px}
+.grid3{display:grid; grid-template-columns:repeat(3,1fr); gap:10px}
+@media (max-width:560px){.grid3{grid-template-columns:1fr}}
+.grid2{display:grid; grid-template-columns:1fr 1fr; gap:10px}
+@media (max-width:560px){.grid2{grid-template-columns:1fr}}
+.btn{font:inherit; font-weight:600; font-size:.88rem; border-radius:8px; padding:8px 12px; border:1px solid var(--line); background:var(--surface); color:var(--ink); cursor:pointer; display:inline-flex; align-items:center; gap:6px; min-height:40px}
+.btn:hover{border-color:var(--act)}
+.btn:disabled{opacity:.55; cursor:not-allowed}
+.btn.primary{background:var(--act); color:var(--act-ink); border-color:var(--act); font-size:1rem; min-height:48px; padding:10px 20px; width:100%; justify-content:center}
+.imgs{display:grid; grid-template-columns:repeat(auto-fill,minmax(150px,1fr)); gap:10px}
+.img{border:1px solid var(--line); border-radius:10px; overflow:hidden; background:var(--field)}
+.img img{display:block; width:100%; aspect-ratio:16/10; object-fit:cover}
+.img div{padding:8px; display:flex; flex-direction:column; gap:6px}
+.img span{font-size:.78rem; color:var(--muted); overflow-wrap:anywhere}
+.big{color:var(--err)!important}
+.muted{color:var(--muted); font-size:.9rem}
+.check{display:flex; gap:8px; align-items:flex-start; font-size:.92rem; margin:8px 0}
+.check input{margin-top:4px; width:18px; height:18px}
+.note{background:var(--warn-bg); color:var(--warn-ink); border-radius:8px; padding:10px 12px; font-size:.88rem; margin:10px 0 0}
+.chips{display:flex; flex-wrap:wrap; gap:8px; margin:8px 0}
+.lab{font:inherit; font-size:.88rem; font-weight:600; display:inline-flex; align-items:center; gap:8px; padding:6px 12px; min-height:40px; border-radius:999px; border:2px solid var(--line); background:var(--surface); color:var(--ink); cursor:pointer}
+.lab i{width:14px; height:14px; border-radius:4px; display:inline-block; flex:none}
+.lab[aria-pressed="true"]{border-color:var(--act); background:var(--field)}
+.lab[aria-pressed="true"]::after{content:"✓"; color:var(--act)}
+.chip{display:inline-block; border-radius:999px; padding:3px 12px; font-size:.85rem; font-weight:600; background:var(--bug-soft); color:var(--bug)}
+details summary{cursor:pointer; font-weight:600}
+.log{list-style:none; margin:12px 0 0; padding:0; font-size:.92rem}
+.log li{padding:6px 0; border-top:1px solid var(--line); display:flex; gap:8px}
+.log .ok{color:var(--ok)} .log .bad{color:var(--err)} .log .run{color:var(--muted)}
+.result{margin-top:12px; padding:12px; border-radius:8px; background:var(--field); border:1px solid var(--line); overflow-wrap:anywhere}
+.result a{color:var(--act); font-weight:600}
+.row{display:flex; gap:8px; align-items:center; flex-wrap:wrap}
+.dropzone{margin:12px 0 6px; padding:18px 12px; border:2px dashed var(--line); border-radius:10px; text-align:center; color:var(--muted); font-size:.92rem; transition:border-color .12s, background .12s}
+.dropzone.over,body.dragging .dropzone{border-color:var(--act); background:var(--field); color:var(--ink)}
+body.dragging::after{content:"Thả file bug.json vào đây để nạp dữ liệu"; position:fixed; inset:0; z-index:50; display:grid; place-items:center; background:rgba(0,0,0,.45); color:#fff; font-size:1.2rem; font-weight:600; pointer-events:none}
+.res{font-size:.92rem; font-weight:600; overflow-wrap:anywhere}
+.res.ok{color:var(--ok)}
+.res.err{color:var(--err)}
+</style>
+</head>
+<body>
+<main>
+  <section>
+    <details id="bugLoad">
+      <summary>Nạp dữ liệu bug từ file, kéo thả hoặc dán JSON</summary>
+      <div class="dropzone" id="bugDrop">Kéo thả file <b>bug.json</b> vào đây (hoặc thả ở bất kỳ đâu trên trang)</div>
+      <div class="row" style="margin:12px 0 6px">
+        <label class="btn" for="bugFile" style="cursor:pointer">Chọn file bug.json</label>
+        <input id="bugFile" type="file" accept=".json,application/json" hidden>
+        <span id="bugRes" class="res" role="status"></span>
+      </div>
+      <label class="f" for="bugPaste">Hoặc dán JSON vào đây</label>
+      <textarea id="bugPaste" spellcheck="false" style="min-height:90px" placeholder='{"title":"...","description":"...","labels":["Bug"]}'></textarea>
+      <div class="row" style="margin-top:8px"><button class="btn" type="button" id="bugApply">Nạp JSON đã dán</button></div>
+      <p class="muted" style="margin:8px 0 0">File được đọc trên máy bạn. Nạp xong, các ô bên dưới được điền lại, bạn xem và sửa trước khi đăng.</p>
+    </details>
+  </section>
+
+  <section>
+    <details id="cred">
+      <summary>Key và token Trello</summary>
+      <div class="grid2" style="margin-top:12px">
+        <div><label class="f" for="key">API key</label><input id="key" type="password" autocomplete="off"></div>
+        <div><label class="f" for="token">Token</label><input id="token" type="password" autocomplete="off"></div>
+      </div>
+      <div class="row" style="margin-bottom:6px">
+        <label class="btn" for="credFile" style="cursor:pointer">Nạp key và token từ file</label>
+        <input id="credFile" type="file" accept=".txt,.json,.env,text/plain,application/json" hidden>
+        <span id="credRes" class="muted" role="status"></span>
+      </div>
+      <p class="muted" style="margin:0 0 6px">File được đọc ngay trên máy bạn, không gửi đi đâu. Hỗ trợ dạng "TRELLO_API_KEY": "...", TRELLO_KEY=... hoặc JSON.</p>
+      <label class="check"><input type="checkbox" id="remember"><span>Nhớ trên máy này (lưu trong trình duyệt, không gửi đi đâu ngoài Trello)</span></label>
+      <div class="row"><button class="btn" type="button" id="test">Kiểm tra key và token</button><span id="testRes" class="muted" role="status"></span></div>
+      <p class="note">Token đọc và ghi được mọi board của bạn. Chỉ dùng file này trên máy của bạn, đừng gửi file đã lưu token cho người khác.</p>
+    </details>
+  </section>
+
+  <section>
+    <div class="row" style="justify-content:space-between"><h2 style="margin:0">Đăng lên</h2><button class="btn" type="button" id="loadBoards">Tải board và list</button></div>
+    <div class="grid3" style="margin-top:10px">
+      <div><label class="f" for="wsSel">Workspace</label><select id="wsSel"></select></div>
+      <div><label class="f" for="boardSel">Board</label><select id="boardSel"></select></div>
+      <div><label class="f" for="listSel">List</label><select id="listSel"></select></div>
+    </div>
+    <p class="muted" role="status" style="margin:8px 0 0"><span id="destHint">Bấm "Tải board và list" để chọn workspace, board, list khác.</span> <a id="boardLink" target="_blank" rel="noopener" hidden style="color:var(--act); font-weight:600">Mở board</a></p>
+  </section>
+
+  <section>
+    <label class="f" for="title">Tiêu đề card</label>
+    <input id="title" type="text" autocomplete="off">
+  </section>
+
+  <section>
+    <label class="f" for="desc">Mô tả</label>
+    <textarea id="desc" spellcheck="false"></textarea>
+    <p class="note" id="ph" hidden>Mô tả còn chỗ <b>&lt;cần bổ sung&gt;</b>. Điền nốt trước khi tạo card.</p>
+  </section>
+
+  <section>
+    <h2>Ảnh và video đính kèm</h2>
+    <div class="imgs" id="imgs"></div>
+    <p class="muted" id="noImg" hidden>Chưa có file nào.</p>
+    <div class="row" style="margin-top:12px">
+      <label class="btn" for="pick" style="cursor:pointer">Thêm file từ máy</label>
+      <input id="pick" type="file" accept="image/*,video/*" multiple hidden>
+    </div>
+    <label class="check"><input type="checkbox" id="cover"><span>Đặt ảnh đầu tiên làm cover của card</span></label>
+    <p class="muted">Giới hạn 10 MB mỗi file với Trello Free, 250 MB với bản trả phí.</p>
+  </section>
+
+  <section>
+    <div class="row" style="justify-content:space-between; margin-bottom:0"><h2 style="margin:0">Label</h2><button class="btn" type="button" id="loadLabels">Tải label từ board</button></div>
+    <div class="chips" id="labelList"></div>
+    <p class="muted" id="labelHint" role="status">Bấm "Tải label từ board" để chọn. Chọn được nhiều label.</p>
+    <label class="check"><input type="checkbox" id="mkLabel"><span id="mkLabelText"></span></label>
+  </section>
+
+  <button class="btn primary" type="button" id="go">Tạo card và upload ảnh</button>
+  <ul class="log" id="log" aria-live="polite"></ul>
+  <div class="result" id="result" hidden></div>
+</main>
+
+<script type="application/json" id="bug-data">
+{"labels": ["Bug"], "title": "[BUGS] <Location>: <mô tả bug>", "description": "Build: <cần bổ sung>\n📱 Environment: Android\nPrecondition: <cần bổ sung>\n🔴 Description: <cần bổ sung>\n🔁 Steps to Reproduce:\n1. <cần bổ sung>\n✅ Expected Result: <cần bổ sung>\n❌ Actual Result: <cần bổ sung>\n📎 Attachment Note: <cần bổ sung>"}
+</script>
+<script>
+(function(){
+  var D = JSON.parse(document.getElementById('bug-data').textContent);
+  var API = 'https://api.trello.com/1';
+  var $ = function(id){return document.getElementById(id)};
+  var files = [];   // {name, blob}
+  var state = {cardId:null, cardUrl:null, uploaded:{}};
+
+  var DB=D.board||{}, DL=D.list||{};
+  var cur = {boardId:DB.id||'', boardName:DB.name||'', boardUrl:DB.url||'', listId:DL.id||'', listName:DL.name||''};
+  function updateWhere(){ var a=$('boardLink'); if(!a) return; if(cur.boardUrl){ a.href=cur.boardUrl; a.hidden=false; } else { a.removeAttribute('href'); a.hidden=true; } }
+  updateWhere();
+  function opt(v,txt,sel){ var o=document.createElement('option'); o.value=v; o.textContent=txt; if(sel) o.selected=true; return o; }
+  $('wsSel').appendChild(opt('','(chưa tải)',true));
+  $('boardSel').appendChild(opt(cur.boardId,cur.boardName||'(chưa chọn)',true));
+  $('listSel').appendChild(opt(cur.listId,cur.listName||'(chưa chọn)',true));
+  $('title').value = D.title;
+  $('desc').value = D.description;
+  var WANT = (D.labels && D.labels[0]) || null;
+  if(WANT){ $('mkLabelText').textContent = 'Nếu board chưa có label "'+WANT+'", tạo mới (màu đỏ) và gắn vào card'; }
+  else { $('mkLabel').disabled = true; $('mkLabelText').textContent = 'Không có label gợi ý cho bug này'; }
+
+  function store(op, k, v){ try{ return op==='get' ? localStorage.getItem(k) : op==='set' ? localStorage.setItem(k,v) : localStorage.removeItem(k); }catch(e){ return null; } }
+  var sk = store('get','trello_key'), st = store('get','trello_token');
+  if(sk && st){ $('key').value=sk; $('token').value=st; $('remember').checked=true; }
+  else $('cred').open = true;
+
+  function ph(){ $('ph').hidden = $('desc').value.indexOf('<cần bổ sung>')===-1; }
+  $('desc').addEventListener('input', ph); ph();
+
+  function dataUriToBlob(u){
+    var p = u.split(','), mime = p[0].match(/:(.*?);/)[1], bin = atob(p[1]), n = bin.length, a = new Uint8Array(n);
+    for(var i=0;i<n;i++) a[i]=bin.charCodeAt(i);
+    return new Blob([a], {type:mime});
+  }
+  function fmt(b){ return b>1048576 ? (b/1048576).toFixed(1)+' MB' : Math.max(1,Math.round(b/1024))+' KB'; }
+  function render(){
+    var box=$('imgs'); box.innerHTML='';
+    files.forEach(function(f,i){
+      var c=document.createElement('div'); c.className='img';
+      if(f.blob.type.indexOf('image/')===0){ var im=document.createElement('img'); im.alt=f.name; im.src=URL.createObjectURL(f.blob); c.appendChild(im); }
+      var d=document.createElement('div');
+      var s=document.createElement('span'); s.textContent=f.name+' · '+fmt(f.blob.size); if(f.blob.size>10485760) s.className='big';
+      var b=document.createElement('button'); b.type='button'; b.className='btn'; b.textContent='Bỏ file'; b.disabled = !!state.uploaded[f.name];
+      b.onclick=function(){ files.splice(i,1); render(); };
+      d.appendChild(s); d.appendChild(b); c.appendChild(d); box.appendChild(c);
+    });
+    $('noImg').hidden = files.length>0;
+  }
+  (D.images||[]).forEach(function(i){ files.push({name:i.name, blob:dataUriToBlob(i.dataUri)}); });
+  render();
+  $('pick').addEventListener('change', function(e){
+    Array.prototype.forEach.call(e.target.files, function(f){ files.push({name:f.name, blob:f}); });
+    e.target.value=''; render();
+  });
+
+  function auth(){
+    var k=$('key').value.trim(), t=$('token').value.trim();
+    if(!k||!t) throw new Error('Chưa nhập API key hoặc token.');
+    return {'Authorization':'OAuth oauth_consumer_key="'+k+'", oauth_token="'+t+'"'};
+  }
+  function api(method, path, opts){
+    opts = opts||{};
+    var h = auth();
+    var url = API+path;
+    if(opts.query){ url += (url.indexOf('?')<0?'?':'&')+Object.keys(opts.query).map(function(k){return encodeURIComponent(k)+'='+encodeURIComponent(opts.query[k])}).join('&'); }
+    var init = {method:method, headers:h};
+    if(opts.form) init.body = opts.form;
+    return fetch(url, init).then(function(r){
+      return r.text().then(function(txt){
+        if(!r.ok){
+          var m = 'HTTP '+r.status;
+          if(r.status===401) m += ': key hoặc token sai, hết hạn hoặc đã thu hồi. Tạo lại token.';
+          else if(r.status===404) m += ': không tìm thấy (board, list hoặc card), hoặc token không truy cập được.';
+          else if(txt) m += ': '+txt.slice(0,160);
+          throw new Error(m);
+        }
+        try{ return JSON.parse(txt); }catch(e){ return txt; }
+      });
+    }, function(){ throw new Error('Lỗi mạng. Kiểm tra kết nối, hoặc trình duyệt/tiện ích đang chặn api.trello.com.'); });
+  }
+
+  function parseCreds(text){
+    var key=null, token=null, m;
+    // by name first
+    m = text.match(/TRELLO_(?:API_)?KEY["'\s]*[:=]\s*["']?([A-Za-z0-9]{20,64})/i); if(m) key=m[1];
+    m = text.match(/TRELLO_(?:API_)?TOKEN["'\s]*[:=]\s*["']?([A-Za-z0-9_\-]{20,})/i); if(m) token=m[1];
+    // fallback by shape: token starts with ATTA, key is 32 hex chars
+    if(!token){ m = text.match(/\bATTA[A-Za-z0-9_\-]{20,}/); if(m) token=m[0]; }
+    if(!key){ m = text.match(/\b[a-f0-9]{32}\b/i); if(m) key=m[0]; }
+    return {key:key, token:token};
+  }
+  $('credFile').addEventListener('change', function(e){
+    var f=e.target.files[0]; if(!f) return;
+    var out=$('credRes');
+    if(f.size>200000){ out.textContent='File quá lớn, không phải file key/token.'; e.target.value=''; return; }
+    var r=new FileReader();
+    r.onload=function(){
+      var c=parseCreds(String(r.result||''));
+      if(c.key) $('key').value=c.key;
+      if(c.token) $('token').value=c.token;
+      out.textContent = c.key&&c.token ? 'Đã nạp key và token. Bấm Kiểm tra để xác nhận.' : (c.key||c.token ? 'Chỉ tìm thấy '+(c.key?'API key':'token')+'. Nhập nốt phần còn lại.' : 'Không tìm thấy key hoặc token trong file.');
+    };
+    r.onerror=function(){ out.textContent='Không đọc được file.'; };
+    r.readAsText(f); e.target.value='';
+  });
+
+  $('test').addEventListener('click', function(){
+    var out=$('testRes'); out.textContent='Đang kiểm tra...';
+    api('GET','/members/me',{query:{fields:'fullName,username'}}).then(function(m){
+      out.textContent='OK: '+m.fullName+' (@'+m.username+')'; loadBoards();
+    }).catch(function(e){ out.textContent=e.message; });
+  });
+
+  var logEl=$('log');
+  function step(text){ var li=document.createElement('li'); li.innerHTML='<span class="run">…</span><span></span>'; li.lastChild.textContent=text; logEl.appendChild(li); return li; }
+  function mark(li, ok, text){ li.firstChild.className = ok?'ok':'bad'; li.firstChild.textContent = ok?'✓':'✗'; if(text) li.lastChild.textContent=text; }
+
+  function persist(){
+    if($('remember').checked){ store('set','trello_key',$('key').value.trim()); store('set','trello_token',$('token').value.trim()); }
+    else { store('del','trello_key'); store('del','trello_token'); }
+  }
+
+  var COLORS={green:'#61bd4f',yellow:'#f2d600',orange:'#ff9f1a',red:'#eb5a46',purple:'#c377e0',blue:'#0079bf',sky:'#00c2e0',lime:'#51e898',pink:'#ff78cb',black:'#344563'};
+  var labelsLoaded=false, boardLabels=[], picked={};
+  function renderLabels(){
+    var box=$('labelList'); box.innerHTML='';
+    boardLabels.forEach(function(l){
+      var b=document.createElement('button'); b.type='button'; b.className='lab';
+      b.setAttribute('aria-pressed', picked[l.id]?'true':'false');
+      var dot=document.createElement('i'); dot.style.background=COLORS[(l.color||'').replace(/_(light|dark)$/,'')]||'#8c96a8';
+      var tx=document.createElement('span'); tx.textContent=l.name||('(màu '+(l.color||'?')+')');
+      b.appendChild(dot); b.appendChild(tx);
+      b.onclick=function(){ picked[l.id]=!picked[l.id]; b.setAttribute('aria-pressed', picked[l.id]?'true':'false'); };
+      box.appendChild(b);
+    });
+    var has = WANT && boardLabels.some(function(l){return (l.name||'').toLowerCase()===WANT.toLowerCase();});
+    $('labelHint').textContent = boardLabels.length ? ('Board có '+boardLabels.length+' label.'+(WANT && !has ? ' Chưa có label "'+WANT+'".' : '')) : 'Board chưa có label nào.';
+  }
+  function loadLabels(){
+    var h=$('labelHint');
+    if(!cur.boardId){ h.textContent='Chọn board để tải label.'; return Promise.resolve(); }
+    h.textContent='Đang tải label...';
+    return api('GET','/boards/'+cur.boardId+'/labels',{query:{fields:'name,color',limit:'1000'}}).then(function(ls){
+      var prev=picked; picked={};
+      boardLabels=ls; labelsLoaded=true;
+      var first=!Object.keys(prev).length;
+      ls.forEach(function(l){
+        if(prev[l.id]) picked[l.id]=true;
+        else if(first && WANT && (l.name||'').toLowerCase()===WANT.toLowerCase()) picked[l.id]=true;
+      });
+      renderLabels();
+    }).catch(function(e){ h.textContent='Không tải được label: '+e.message; });
+  }
+  $('loadLabels').addEventListener('click', function(){ loadLabels(); });
+  var boardsById={}, destSeq=0;
+  function resetCardState(){
+    state.cardId=null; state.cardUrl=null; state.uploaded={};
+    $('go').disabled=false; $('go').textContent='Tạo card và upload ảnh'; $('result').hidden=true; $('log').innerHTML='';
+    render();
+  }
+  function loadLists(boardId, preferListId){
+    var seq=++destSeq, hint=$('destHint'), sel=$('listSel');
+    hint.textContent='Đang tải list...';
+    return api('GET','/boards/'+boardId+'/lists',{query:{filter:'open',fields:'name'}}).then(function(ls){
+      if(seq!==destSeq) return;
+      sel.innerHTML='';
+      var pick = ls.filter(function(l){return l.id===preferListId;})[0] || ls.filter(function(l){return /bug/i.test(l.name);})[0] || null;
+      if(!pick) sel.appendChild(opt('','Chọn list...',true));
+      ls.forEach(function(l){ sel.appendChild(opt(l.id,l.name,pick&&pick.id===l.id)); });
+      cur.listId = pick ? pick.id : ''; cur.listName = pick ? pick.name : '';
+      updateWhere();
+      hint.textContent = ls.length ? (pick ? 'Sẽ đăng vào "'+pick.name+'".' : 'Chọn list để đăng.') : 'Board này chưa có list nào đang mở.';
+    }).catch(function(e){ if(seq===destSeq) hint.textContent='Không tải được list: '+e.message; });
+  }
+  function onBoardChange(boardId, preferListId){
+    var b=boardsById[boardId];
+    cur.boardId=boardId; cur.boardName=b?b.name:cur.boardName; cur.boardUrl=b?b.url:cur.boardUrl; cur.listId=''; cur.listName='';
+    updateWhere();
+    picked={}; labelsLoaded=false; boardLabels=[]; $('labelList').innerHTML='';
+    resetCardState();
+    return loadLists(boardId, preferListId).then(function(){ return loadLabels(); });
+  }
+  var boardsByOrg={}, orgNames={};
+  function orgKey(b){ return b.idOrganization || '__none'; }
+  function fillBoards(key, preferId){
+    var sel=$('boardSel'); sel.innerHTML='';
+    var list=(boardsByOrg[key]||[]).slice().sort(function(a,b){return a.name.localeCompare(b.name);});
+    list.forEach(function(b){ sel.appendChild(opt(b.id,b.name,b.id===preferId)); });
+    if(preferId && !boardsById[preferId]) sel.insertBefore(opt(preferId,cur.boardName,true), sel.firstChild);
+    return list;
+  }
+  function selectWorkspaceOf(boardId){
+    var b=boardsById[boardId]; if(!b) return false;
+    var key=orgKey(b); $('wsSel').value=key; fillBoards(key, boardId); return true;
+  }
+  function loadBoards(){
+    var hint=$('destHint'); hint.textContent='Đang tải workspace và board...';
+    return Promise.all([
+      api('GET','/members/me/boards',{query:{filter:'open',fields:'name,url,idOrganization'}}),
+      api('GET','/members/me/organizations',{query:{fields:'displayName'}}).catch(function(){return [];})
+    ]).then(function(r){
+      var bs=r[0]; orgNames={'__none':'Khác (không thuộc workspace)'}; r[1].forEach(function(o){orgNames[o.id]=o.displayName;});
+      boardsById={}; boardsByOrg={};
+      bs.forEach(function(b){ boardsById[b.id]=b; (boardsByOrg[orgKey(b)]=boardsByOrg[orgKey(b)]||[]).push(b); });
+      var keys=Object.keys(boardsByOrg).sort(function(a,b){return (orgNames[a]||a).localeCompare(orgNames[b]||b);});
+      var ws=$('wsSel'); ws.innerHTML='';
+      var curKey = boardsById[cur.boardId] ? orgKey(boardsById[cur.boardId]) : null;
+      keys.forEach(function(k){ ws.appendChild(opt(k,(orgNames[k]||'Workspace khác')+' ('+boardsByOrg[k].length+')',k===curKey)); });
+      if(!curKey && cur.boardId){ ws.insertBefore(opt('','(board mặc định)',true), ws.firstChild); }
+      if(!cur.boardId){
+        ws.insertBefore(opt('','Chọn workspace...',true), ws.firstChild);
+        var bsel=$('boardSel'); bsel.innerHTML=''; bsel.appendChild(opt('','Chọn board...',true));
+        $('listSel').innerHTML=''; $('listSel').appendChild(opt('','Chọn list...',true));
+        hint.textContent='Có '+keys.length+' workspace, '+bs.length+' board. Chọn workspace, board rồi list để đăng.';
+        return;
+      }
+      fillBoards(curKey||'', cur.boardId);
+      hint.textContent='Có '+keys.length+' workspace, '+bs.length+' board. Chọn nơi đăng.';
+      return loadLists(cur.boardId, cur.listId).then(function(){ return loadLabels(); });
+    }).catch(function(e){ hint.textContent='Không tải được board: '+e.message; });
+  }
+  $('wsSel').addEventListener('change', function(e){
+    var list=fillBoards(e.target.value, null);
+    if(list.length){ onBoardChange(list[0].id, null); }
+    else { $('destHint').textContent='Workspace này chưa có board đang mở.'; }
+  });
+  $('loadBoards').addEventListener('click', function(){ loadBoards(); });
+  $('boardSel').addEventListener('change', function(e){ if(e.target.value) onBoardChange(e.target.value, null); });
+  $('listSel').addEventListener('change', function(e){
+    var o=e.target.options[e.target.selectedIndex];
+    cur.listId=e.target.value; cur.listName=cur.listId?o.textContent:''; updateWhere(); resetCardState();
+    $('destHint').textContent = cur.listId ? 'Sẽ đăng vào "'+cur.listName+'".' : 'Chọn list để đăng.';
+  });
+  if($('key').value && $('token').value) loadBoards();
+
+  function findLabel(){
+    var ready = labelsLoaded ? Promise.resolve() : loadLabels();
+    return ready.then(function(){
+      var ids = boardLabels.filter(function(l){return picked[l.id];}).map(function(l){return l.id;});
+      var li = step(ids.length ? 'Gắn '+ids.length+' label đã chọn' : 'Không chọn label nào');
+      mark(li,true);
+      var has = WANT && boardLabels.some(function(l){return (l.name||'').toLowerCase()===WANT.toLowerCase();});
+      if(WANT && !has && $('mkLabel').checked){
+        var l2 = step('Tạo label "'+WANT+'"');
+        var f=new FormData(); f.append('name',WANT); f.append('color','red'); f.append('idBoard',cur.boardId);
+        return api('POST','/labels',{form:f}).then(function(n){ mark(l2,true,'Đã tạo label "'+WANT+'"'); ids.push(n.id); return ids; });
+      }
+      return ids;
+    });
+  }
+
+  function createCard(labelIds){
+    if(state.cardId) return Promise.resolve();
+    var li = step('Tạo card');
+    var f=new FormData();
+    f.append('idList',cur.listId); f.append('name',$('title').value); f.append('desc',$('desc').value);
+    if(labelIds && labelIds.length) f.append('idLabels',labelIds.join(','));
+    return api('POST','/cards',{form:f}).then(function(c){
+      state.cardId=c.id; state.cardUrl=c.shortUrl||c.url; mark(li,true,'Đã tạo card');
+    }).catch(function(e){ mark(li,false,'Tạo card lỗi: '+e.message); throw e; });
+  }
+
+  function upload(){
+    var chain = Promise.resolve(), firstId=null, failed=0;
+    files.forEach(function(f, idx){
+      if(state.uploaded[f.name]){ if(idx===0) firstId=state.uploaded[f.name]; return; }
+      chain = chain.then(function(){
+        var li = step('Upload '+f.name+' ('+fmt(f.blob.size)+')');
+        if(f.blob.size>10485760) li.lastChild.textContent += ' — lớn hơn 10 MB, bản Free có thể từ chối';
+        var fd=new FormData(); fd.append('file', f.blob, f.name); fd.append('name', f.name);
+        return api('POST','/cards/'+state.cardId+'/attachments',{form:fd}).then(function(a){
+          state.uploaded[f.name]=a.id; if(idx===0) firstId=a.id; mark(li,true,'Đã upload '+f.name);
+        }).catch(function(e){ failed++; mark(li,false,f.name+': '+e.message); });
+      });
+    });
+    return chain.then(function(){
+      if($('cover').checked && firstId){
+        var li=step('Đặt cover');
+        return api('PUT','/cards/'+state.cardId,{query:{idAttachmentCover:firstId}}).then(function(){ mark(li,true,'Đã đặt cover'); }).catch(function(e){ mark(li,false,'Cover lỗi: '+e.message); });
+      }
+    }).then(function(){ return failed; });
+  }
+
+  function verify(){
+    var li=step('Kiểm tra danh sách attachment của card');
+    return api('GET','/cards/'+state.cardId+'/attachments',{query:{fields:'name,bytes'}}).then(function(as){
+      mark(li,true,'Card có '+as.length+' attachment: '+as.map(function(a){return a.name}).join(', '));
+    }).catch(function(e){ mark(li,false,e.message); });
+  }
+
+  function ensureOption(sel, value, text){
+    for(var i=0;i<sel.options.length;i++){ if(sel.options[i].value===value){ sel.selectedIndex=i; return; } }
+    var o=opt(value,text,true); sel.insertBefore(o, sel.firstChild); sel.value=value;
+  }
+  function hasCreds(){ return !!($('key').value.trim() && $('token').value.trim()); }
+
+  function loadBug(o){
+    if(!o || typeof o!=='object') throw new Error('JSON không đúng định dạng.');
+    if(typeof o.title!=='string' || typeof o.description!=='string') throw new Error('Thiếu "title" hoặc "description" (kiểu chuỗi).');
+    $('title').value=o.title; $('desc').value=o.description; ph();
+    WANT = (o.labels && o.labels[0]) || null;
+    $('mkLabel').disabled = !WANT; $('mkLabel').checked = false;
+    $('mkLabelText').textContent = WANT ? 'Nếu board chưa có label "'+WANT+'", tạo mới (màu đỏ) và gắn vào card' : 'Không có label gợi ý cho bug này';
+    files=[]; (o.images||[]).forEach(function(i){
+      if(i && typeof i.dataUri==='string' && i.name) files.push({name:i.name, blob:dataUriToBlob(i.dataUri)});
+    });
+    resetCardState();
+    var wantBoard = o.board && o.board.id;
+    if(wantBoard && wantBoard!==cur.boardId){
+      cur.boardName=o.board.name||cur.boardName; cur.boardUrl=o.board.url||cur.boardUrl;
+      if(!selectWorkspaceOf(wantBoard)) ensureOption($('boardSel'), wantBoard, cur.boardName);
+      if(hasCreds()){ onBoardChange(wantBoard, o.list&&o.list.id); }
+      else {
+        cur.boardId=wantBoard; cur.listId=(o.list&&o.list.id)||''; cur.listName=(o.list&&o.list.name)||'';
+        $('listSel').innerHTML=''; if(cur.listId) $('listSel').appendChild(opt(cur.listId,cur.listName,true));
+        updateWhere();
+      }
+    } else if(o.list && o.list.id){
+      cur.listId=o.list.id; cur.listName=o.list.name||cur.listName;
+      ensureOption($('listSel'), cur.listId, cur.listName); updateWhere();
+    }
+    // preselect suggested label if labels are already loaded for the current board
+    if(labelsLoaded){
+      picked={}; boardLabels.forEach(function(l){ if(WANT && (l.name||'').toLowerCase()===WANT.toLowerCase()) picked[l.id]=true; });
+      renderLabels();
+    }
+    return 'Đã nạp: '+o.title.slice(0,60)+(files.length?' ('+files.length+' file)':'');
+  }
+  function showRes(msg, ok){
+    var out=$('bugRes'); out.className='res '+(ok?'ok':'err');
+    out.textContent=(ok?'✔ ':'✖ ')+msg;
+  }
+  function applyText(text){
+    try{ showRes(loadBug(JSON.parse(text)), true); }
+    catch(e){ showRes('Không nạp được: '+e.message, false); }
+  }
+  function readBugFile(f){
+    if(!f) return;
+    if(!/\.json$/i.test(f.name) && f.type!=='application/json'){ $('bugLoad').open=true; showRes('Chỉ nhận file .json (đã bỏ qua: '+f.name+').', false); return; }
+    if(f.size>60*1048576){ showRes('File quá lớn.', false); return; }
+    var r=new FileReader(); r.onload=function(){ $('bugLoad').open=true; applyText(String(r.result||'')); }; r.onerror=function(){ showRes('Không đọc được file.', false); };
+    r.readAsText(f);
+  }
+  $('bugFile').addEventListener('change', function(e){ readBugFile(e.target.files[0]); e.target.value=''; });
+
+  // Kéo thả file .json vào bất kỳ đâu trên trang
+  (function(){
+    var depth=0;
+    function hasFiles(e){ var t=e.dataTransfer&&e.dataTransfer.types; return !!t && Array.prototype.indexOf.call(t,'Files')>=0; }
+    document.addEventListener('dragenter', function(e){ if(!hasFiles(e)) return; e.preventDefault(); depth++; document.body.classList.add('dragging'); });
+    document.addEventListener('dragover', function(e){ if(!hasFiles(e)) return; e.preventDefault(); e.dataTransfer.dropEffect='copy'; });
+    document.addEventListener('dragleave', function(e){ if(!hasFiles(e)) return; depth=Math.max(0,depth-1); if(!depth) document.body.classList.remove('dragging'); });
+    document.addEventListener('drop', function(e){
+      if(!hasFiles(e)) return;
+      e.preventDefault(); depth=0; document.body.classList.remove('dragging');
+      var fs=e.dataTransfer.files; if(fs && fs.length) readBugFile(fs[0]);
+    });
+  })();
+  $('bugApply').addEventListener('click', function(){ applyText($('bugPaste').value); });
+
+  $('go').addEventListener('click', function(){
+    var btn=$('go');
+    try{ auth(); }catch(e){ $('cred').open=true; logEl.innerHTML=''; var li=step(e.message); mark(li,false); return; }
+    if(!cur.listId){ logEl.innerHTML=''; var ll=step('Chưa chọn list để đăng.'); mark(ll,false); return; }
+    if(!$('title').value.trim()){ var l=step('Tiêu đề đang trống.'); mark(l,false); return; }
+    persist();
+    btn.disabled=true; logEl.innerHTML='';
+    findLabel().then(createCard).then(upload).then(function(failed){
+      return verify().then(function(){ return failed; });
+    }).then(function(failed){
+      var r=$('result'); r.hidden=false; r.innerHTML='';
+      var a=document.createElement('a'); a.href=state.cardUrl; a.target='_blank'; a.rel='noopener'; a.textContent=state.cardUrl;
+      r.appendChild(document.createTextNode(failed? 'Card đã tạo, nhưng '+failed+' file upload lỗi. Bấm nút lần nữa để thử lại các file đó. ' : 'Xong. '));
+      r.appendChild(a);
+      btn.textContent = failed ? 'Thử upload lại file lỗi' : 'Tạo card và upload ảnh';
+      if(failed) btn.disabled=false;
+      else { btn.textContent='Đã đăng'; }
+    }).catch(function(e){
+      var li=step(e.message); mark(li,false);
+      btn.disabled=false;
+    });
+  });
+})();
+</script>
+</body>
+</html>
